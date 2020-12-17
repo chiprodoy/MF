@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 
 interface FormController
@@ -23,7 +24,7 @@ trait ControllerResources
     public $successStatus = 200;
     public $errorMsg;
     public $errorStatus = 500;
-    public $notFoundStatus = 404;
+    public $notFoundStatus = 204; //partial content for 206
 
     public $col;
     public $limitRow = 100;
@@ -119,7 +120,8 @@ trait ControllerResources
                 
             }
         }
-        
+        if(method_exists($this,'uploadMyFile')) $this->uploadMyFile();
+
         try{
           //  DB::enableQueryLog();
             $m = new $this->namaModel;
@@ -475,7 +477,7 @@ trait ControllerResources
         $datas=$this->namaModel::find($id);
         $formfields=$datas->getFormFields();
         
-         if (View::exists($this->controllerName.'.crud.create')) {
+         if (View::exists($this->controllerName.'.crud.show')) {
             
             return view($this->controllerName.'.crud.show',
             array_merge(get_object_vars($this),compact('datas','formfields')));
@@ -495,5 +497,13 @@ trait ControllerResources
     protected function getClassName(): string
     {
         return (new \ReflectionClass($this))->getShortName();
+    }
+}
+/*
+todo : fix upload file
+*/
+trait UploadFile{
+    public function uploadMyFile(){
+        $path = Storage::disk('public')->put('photos', new File('/path/to/photo'));
     }
 }

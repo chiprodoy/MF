@@ -24,7 +24,7 @@ trait ControllerResources
     public $successStatus = 200;
     public $errorMsg;
     public $errorStatus = 500;
-    public $notFoundStatus = 204; //partial content for 206
+    public $notFoundStatus = 404;//204; //partial content for 206
 
     public $col;
     public $limitRow = 100;
@@ -57,6 +57,7 @@ trait ControllerResources
         if(empty($this->readAction)){
             $this->readAction=url("api/".$this->controllerName);
         }
+        
        // $this->controllerName = Route::currentRouteName();
     }
 
@@ -70,7 +71,7 @@ trait ControllerResources
      */
     public function index(Request $request)
     {
-      
+     
             $this->page=(empty($request->p) ? $this->page:$request->p);
             if(!isset($request->nopaging)){
                 $limit=$this->limitRow;
@@ -360,7 +361,8 @@ trait ControllerResources
         //TODO : auth
      //   Gate::authorize('read', $this->namaModel);
      //   Gate::authorize('read-own', $this->namaModel);
-        if($this->totalRec < 1){
+     
+        if($this->totalRec < 1 && empty($this->errorMsg)){
             return response()->json([
                 'response'=>[
                     'total_record'=>$this->totalRec,
@@ -407,21 +409,23 @@ trait ControllerResources
         $filterFields=$this->namaModel::getFilterable();
         $obj = new $this->namaModel();
          $formfields=$obj->getFormFields();
-       // $fields = $this->fields();
-       // $fieldsets = $this->fieldsets();
-       // $inlines_name = $this->getInlinesName();
+       
         if (View::exists($this->controllerName.'.crud.index')) {
             
             return view($this->controllerName.'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
             'totalPage','prev','next','filterFields','formfields')));
         
         }else{
-           
-            return view('~layouts.component.'.env('COMPONENT_UI').'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
-            'totalPage','prev','next','filterFields','formfields')));
+            if(class_exists(\App\View\Components\Tailwindcss\Crud\Index::class)) {
+                $viewObject=new \App\View\Components\Tailwindcss\Crud\Index($this->controllerName,$this->namaModel,$this->menu,$this->col);
+                return $viewObject->render();
+            } else{
+                return view('~layouts.component.'.env('COMPONENT_UI').'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
+                'totalPage','prev','next','filterFields','formfields')));
+            }
         }
-
     }
+
     public function output(Request $request){
         if (0 === strpos($request->headers->get('Accept'), 'application/json') || $request->ajax()) {
             return $this->outputJSON();

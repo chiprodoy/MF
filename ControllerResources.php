@@ -36,11 +36,13 @@ trait ControllerResources
     public $saveAction;
     public $readAction;
     public $currentUser;
-
+    public $theme;
+    public $mustCheckingRole;
 
 
     public function __construct()
     {
+        $this->theme=config('app.ui');
         $this->objModel=$this->namaModel::select('*');
         if(!empty($this->namaModel::$relasi)) $this->objModel->with($this->namaModel::$relasi);
         $this->currentUser=Auth::user();
@@ -57,7 +59,7 @@ trait ControllerResources
         if(empty($this->readAction)){
             $this->readAction=url("api/".$this->controllerName);
         }
-        
+        $this->mustCheckingRole = (isset($this->needCheckingRole) ? true : false);
        // $this->controllerName = Route::currentRouteName();
     }
 
@@ -71,7 +73,20 @@ trait ControllerResources
      */
     public function index(Request $request)
     {
-     
+        if(config('app.ui')){
+            $this->page=(empty($request->page) ? $this->page:$request->page);
+            if(!isset($request->nopaging)){
+                $this->limitRow = (isset($request->rows) ? $request->rows : $this->limitRow);
+                $limit=$this->limitRow;
+                $this->offset=($this->page*$limit)-$limit;
+            }else{
+                $this->limitRow=null;
+                $limit= $this->limitRow;
+            } 
+            $this->getModelRecord($this->offset,$limit,$request);
+            return $this->output($request);
+
+        }else{
             $this->page=(empty($request->p) ? $this->page:$request->p);
             if(!isset($request->nopaging)){
                 $limit=$this->limitRow;
@@ -82,7 +97,7 @@ trait ControllerResources
             } 
             $this->getModelRecord($this->offset,$limit,$request);
             return $this->output($request);
-       
+        }
     }
 
      /**
@@ -245,7 +260,7 @@ trait ControllerResources
         }else{
 
             return redirect()->route($defaultRoute,$id)
-            ->withErrors($validator)
+
             ->with('responcode',$respon['response']['metadata']['code'])
             ->with('respon', $respon['response']['metadata']['message']);
         }
@@ -357,33 +372,42 @@ trait ControllerResources
 
     }
 
+    public function JSONTemplate($data,$responCode){
+        if(config('app.ui')){
+            return [
+                
+                    'total'=>$this->totalRec,
+                    'rows'=>$data,
+                    'page'=>$this->page,
+                    'limit'=>$this->limitRow,
+                    'total_page'=>((empty($this->limitRow)) ? 1 : ceil($this->totalRec/$this->limitRow)),
+                    'metadata'=>['message'=>'ok','code'=>$responCode],
+               
+            ];
+        }else{
+            return [
+                'response'=>[
+                    'total_record'=>$this->totalRec,
+                    'list'=>$data,
+                    'page'=>$this->page,
+                    'limit'=>$this->limitRow,
+                    'total_page'=>((empty($this->limitRow)) ? 1 : ceil($this->totalRec/$this->limitRow)),
+                    'metadata'=>['message'=>'ok','code'=>$responCode],
+                ]
+            ];
+        }
+
+    }
     public function outputJSON(){
         //TODO : auth
      //   Gate::authorize('read', $this->namaModel);
      //   Gate::authorize('read-own', $this->namaModel);
      
         if($this->totalRec < 1 && empty($this->errorMsg)){
-            return response()->json([
-                'response'=>[
-                    'total_record'=>$this->totalRec,
-                    'list'=>$this->objModel->get(),
-                    'page'=>$this->page,
-                    'limit'=>$this->limitRow,
-                    'total_page'=>((empty($this->limitRow)) ? 1 : ceil($this->totalRec/$this->limitRow)),
-                    'metadata'=>['message'=>'ok','code'=>$this->notFoundStatus],
-                ]
-            ],$this->notFoundStatus);
+            return response()
+            ->json($this->JSONTemplate($this->objModel->get(),$this->notFoundStatus),$this->notFoundStatus);
         }elseif($this->totalRec > 0 && empty($this->errorMsg)){
-            return response()->json([
-                'response'=>[
-                    'total_record'=>$this->totalRec,
-                    'list'=>$this->objModel->get(),
-                    'page'=>$this->page,
-                    'limit'=>$this->limitRow,
-                    'total_page'=>((empty($this->limitRow)) ? 1 : ceil($this->totalRec/$this->limitRow)),
-                    'metadata'=>['message'=>'ok','code'=>$this->successStatus],
-                ]
-                ],$this->successStatus);
+            return response()->json($this->JSONTemplate($this->objModel->get(),$this->successStatus),$this->successStatus);
         }else{
             return response()->json([
                 'response' => [
@@ -409,20 +433,35 @@ trait ControllerResources
         $filterFields=$this->namaModel::getFilterable();
         $obj = new $this->namaModel();
          $formfields=$obj->getFormFields();
-       
-        if (View::exists($this->controllerName.'.crud.index')) {
-            return view($this->controllerName.'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
-            'totalPage','prev','next','filterFields','formfields')));
-        
-        }else{
-            if(class_exists(\App\View\Components\Tailwindcss\Crud\Index::class)) {
-                $viewObject=new \App\View\Components\Tailwindcss\Crud\Index($this->controllerName,$this->namaModel,$this->menu,$this->col);
-                return $viewObject->render();
-            } else{
-                
-                return view('~layouts.component.'.env('COMPONENT_UI').'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
-                'totalPage','prev','next','filterFields','formfields')));
+         $viewAble=$this->namaModel::viewable();
+         /*
+        *    for backward and new version compatibility
+        *
+        */
+        if(config('app.ui')){
+            if (View::exists($this->controllerName.'.crud.index')) {
+                return view($this->controllerName.'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
+                'totalPage','prev','next','filterFields','formfields','viewAble')));
+            }else{
+                return view('components.'.config('app.ui').'.layout.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
+                'totalPage','prev','next','filterFields','formfields','viewAble')));
             }
+        }else{
+            if (View::exists($this->controllerName.'.crud.index')) {
+                return view($this->controllerName.'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
+                'totalPage','prev','next','filterFields','formfields')));
+            
+            }else{
+                if(class_exists(\App\View\Components\Tailwindcss\Crud\Index::class)) {
+                    $viewObject=new \App\View\Components\Tailwindcss\Crud\Index($this->controllerName,$this->namaModel,$this->menu,$this->col);
+                    return $viewObject->render();
+                } else{
+                    
+                    return view('~layouts.component.'.env('COMPONENT_UI').'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
+                    'totalPage','prev','next','filterFields','formfields')));
+                }
+            }
+    
         }
     }
 
@@ -510,4 +549,9 @@ trait UploadFile{
     public function uploadMyFile(){
         $path = Storage::disk('public')->put('photos', new File('/path/to/photo'));
     }
+}
+
+trait RoleAbility{
+
+    private $needCheckingRole=true;
 }

@@ -411,7 +411,6 @@ trait ControllerResources
          $formfields=$obj->getFormFields();
        
         if (View::exists($this->controllerName.'.crud.index')) {
-            
             return view($this->controllerName.'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
             'totalPage','prev','next','filterFields','formfields')));
         
@@ -420,6 +419,7 @@ trait ControllerResources
                 $viewObject=new \App\View\Components\Tailwindcss\Crud\Index($this->controllerName,$this->namaModel,$this->menu,$this->col);
                 return $viewObject->render();
             } else{
+                
                 return view('~layouts.component.'.env('COMPONENT_UI').'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
                 'totalPage','prev','next','filterFields','formfields')));
             }

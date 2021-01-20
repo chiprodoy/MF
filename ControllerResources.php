@@ -74,6 +74,7 @@ trait ControllerResources
     public function index(Request $request)
     {
         if(config('app.ui')){
+            $sortMethod=($request->order=='asc' ? false: true);
             $this->page=(empty($request->page) ? $this->page:$request->page);
             if(!isset($request->nopaging)){
                 $this->limitRow = (isset($request->rows) ? $request->rows : $this->limitRow);
@@ -83,7 +84,7 @@ trait ControllerResources
                 $this->limitRow=null;
                 $limit= $this->limitRow;
             } 
-            $this->getModelRecord($this->offset,$limit,$request);
+            $this->getModelRecord($this->offset,$limit,$request,$request->sort,$sortMethod);
             return $this->output($request);
 
         }else{

@@ -146,8 +146,8 @@ trait ControllerResources
             foreach($m->getFillable() as $k => $v){
                 $m->$v = $request->$v;
             }
-            $m->user_modify=Auth::user()->name;
-            $m->user_id=Auth::id();
+            ($this->mustCheckingRole ? $m->user_modify=Auth::user()->name : 'ANONYMOUS');
+            ($this->mustCheckingRole ? $m->user_id=Auth::id() : 1 );
 
             $m->save();
            // dd(DB::getQueryLog());

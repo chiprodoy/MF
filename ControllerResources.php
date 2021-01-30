@@ -37,7 +37,7 @@ trait ControllerResources
     public $readAction;
     public $currentUser;
     public $theme;
-    public $mustCheckingRole;
+    public $mustCheckingRole=false;
 
 
     public function __construct()
@@ -146,8 +146,8 @@ trait ControllerResources
             foreach($m->getFillable() as $k => $v){
                 $m->$v = $request->$v;
             }
-            ($this->mustCheckingRole ? $m->user_modify=Auth::user()->name : 'ANONYMOUS');
-            ($this->mustCheckingRole ? $m->user_id=Auth::id() : 1 );
+            $m->user_modify= ($this->mustCheckingRole ? Auth::user()->name : 'ANONYMOUS');
+            $m->user_id=($this->mustCheckingRole ? Auth::id() : 1 );
 
             $m->save();
            // dd(DB::getQueryLog());

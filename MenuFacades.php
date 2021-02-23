@@ -20,6 +20,4 @@ trait HasMenuFacades
        return $parentMenu;
         
     }
-
-
 }

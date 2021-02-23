@@ -21,10 +21,14 @@ trait ControllerResources
 {
     
     public $objModel;
-    public $successStatus = 200;
     public $errorMsg;
+    
+    // HTTP STATUS CODE
+    public $successStatus = 200;
     public $errorStatus = 500;
     public $notFoundStatus = 404;//204; //partial content for 206
+    public $noContentStatus = 204;//204; //partial content for 206
+    public $badRequestStatus =400;
 
     public $col;
     public $limitRow = 100;
@@ -38,7 +42,7 @@ trait ControllerResources
     public $currentUser;
     public $theme;
     public $mustCheckingRole=false;
-
+    public $linkedController;
 
     public function __construct()
     {
@@ -121,7 +125,7 @@ trait ControllerResources
                      $pesan=$pesan." ".$message;
                 }
                 $respon= ['response'=>[
-                    'metadata'=>['message'=>$pesan,'code'=>$this->errorStatus],
+                    'metadata'=>['message'=>$pesan,'code'=>$this->badRequestStatus],
                 ]];
 
                 if (0 === strpos($request->headers->get('Accept'), 'application/json')) {
@@ -330,7 +334,7 @@ trait ControllerResources
         
     }
 
-    public function getModelRecord($offset,$limit,$keyword=null,$orderby='',$desc=true){
+    public function getModelRecord($offset,$limit,$keyword=null,$orderby='id',$desc=true){
         
         try{
 
@@ -406,14 +410,17 @@ trait ControllerResources
      
         if($this->totalRec < 1 && empty($this->errorMsg)){
             return response()
-            ->json($this->JSONTemplate($this->objModel->get(),$this->notFoundStatus),$this->notFoundStatus);
+            ->json($this->JSONTemplate($this->objModel->get(),
+            $this->noContentStatus),$this->noContentStatus);
         }elseif($this->totalRec > 0 && empty($this->errorMsg)){
-            return response()->json($this->JSONTemplate($this->objModel->get(),$this->successStatus),$this->successStatus);
+            return response()->json($this->JSONTemplate($this->objModel->get(),
+            $this->successStatus),$this->successStatus);
         }else{
             return response()->json([
                 'response' => [
                     'metadata'=>[
-                        'message' => "Error:." . $this->errorMsg,'code'=>$this->errorStatus],
+                        'message' => "Error:." . $this->errorMsg,
+                        'code'=>$this->errorStatus],
                     ]],$this->errorStatus
             );
         }

@@ -29,6 +29,7 @@ trait ControllerResources
     public $notFoundStatus = 404;//204; //partial content for 206
     public $noContentStatus = 204;//204; //partial content for 206
     public $badRequestStatus =400;
+    public $validationErrorStatus =422;
 
     public $col;
     public $limitRow = 100;

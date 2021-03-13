@@ -528,16 +528,28 @@ trait ControllerResources
         //
         $datas=$this->namaModel::find($id);
         $formfields=$datas->getFormFields();
-        
-         if (View::exists($this->controllerName.'.crud.show')) {
-            
-            return view($this->controllerName.'.crud.show',
-            array_merge(get_object_vars($this),compact('datas','formfields')));
-        
+        $viewAble=$this->namaModel::viewable();
+        if(config('app.ui')){
+            if (View::exists($this->controllerName.'.crud.show')) {
+                return view($this->controllerName.'.crud.show',
+                array_merge(get_object_vars($this),compact('datas',
+                'formfields','viewAble')));
+            }else{
+                return view('components.'.config('app.ui').'.layout.show',
+                array_merge(get_object_vars($this),compact('datas',
+                'formfields','viewAble')));
+            }
         }else{
-           
-            return view('~layouts.component.'.env('COMPONENT_UI').'.crud.show',
-            array_merge(get_object_vars($this),compact('datas','formfields')));
+            if (View::exists($this->controllerName.'.crud.show')) {
+                
+                return view($this->controllerName.'.crud.show',
+                array_merge(get_object_vars($this),compact('datas','formfields')));
+            
+            }else{
+            
+                return view('~layouts.component.'.env('COMPONENT_UI').'.crud.show',
+                array_merge(get_object_vars($this),compact('datas','formfields')));
+            }
         }
     }
 

@@ -325,7 +325,7 @@ trait ControllerResources
             return response()->json($respon,$respon['response']['metadata']['code']);
         }else{
 
-            return redirect()->route($this->controllerName)
+            return redirect()->route($this->controllerName.'.index')
             ->with('responcode',$respon['response']['metadata']['code'])
             ->with('respon', $respon['response']['metadata']['message']);
         }
@@ -378,11 +378,11 @@ trait ControllerResources
 
     }
 
-    public function JSONTemplate($data,$responCode){
+    public function JSONTemplate($data,$responCode,$total=null){
         if(config('app.ui')){
             return [
                 
-                    'total'=>$this->totalRec,
+                    'total'=>(empty($total) ? $this->totalRec : $total),
                     'rows'=>$data,
                     'page'=>$this->page,
                     'limit'=>$this->limitRow,

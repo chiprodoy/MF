@@ -111,9 +111,9 @@ class FIELD
         return new CField('checkbox', ['list' => $choices]);
     }
 
-    public static function File($target)
+    public static function File()
     {
-        return new CField('file', ['target' => $target]);
+        return new CField('file');
     }
 
     public static function Date()

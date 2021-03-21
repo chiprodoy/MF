@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 
 interface FormController
 {
@@ -135,21 +136,27 @@ trait ControllerResources
         
                     return redirect()->route($defaultRoute)
                     ->withErrors($validator)
-                    ->withInput()
                     ->with('responcode',$respon['response']['metadata']['code'])
-                    ->with('respon', $respon['response']['metadata']['message']);
+                    ->with('respon', $respon['response']['metadata']['message'])
+                    ->withInput();
                 }
                 
             }
         }
-        if(method_exists($this,'uploadMyFile')) $this->uploadMyFile();
+        if(method_exists($this,'uploadMyFile')){
+            $uploaded=$this->uploadMyFile($request);
+        } 
 
         try{
           //  DB::enableQueryLog();
             $m = new $this->namaModel;
             //$m = new \App\Models\User;
             foreach($m->getFillable() as $k => $v){
-                $m->$v = $request->$v;
+                if(Str::contains($v, '_file')){
+                    $m->$v=$uploaded;
+                }else{
+                    $m->$v = $request->$v;
+                }
             }
             $m->user_modify= ($this->mustCheckingRole ? Auth::user()->name : 'ANONYMOUS');
             $m->user_id=($this->mustCheckingRole ? Auth::id() : 1 );
@@ -244,9 +251,30 @@ trait ControllerResources
                 
             }
         }
-        
+        if(method_exists($this,'uploadMyFile')){
+            $uploaded=$this->uploadMyFile($request);
+        } 
         try{
-            $rec=$this->namaModel::find($id)->update($request->all());
+
+            $m = $this->namaModel::find($id);
+            //$m = new \App\Models\User;
+            foreach($m->getFillable() as $k => $v){
+                if(Str::contains($v, '_file')){
+                    if(empty($uploaded[$v])){
+                        $m->$v=$m->$v;
+                    }else{
+                        $m->$v=$uploaded[$v];
+                    }
+                }else{
+                    $m->$v = $request->$v;
+                }
+            }
+            $m->user_modify= ($this->mustCheckingRole ? Auth::user()->name : 'ANONYMOUS');
+            $m->user_id=($this->mustCheckingRole ? Auth::id() : 1 );
+
+            $m->save();
+
+           // $rec=$this->namaModel::find($id)->update($request->all());
             //$rec->kode_booking='123456789';
             $respon=['response'=>[
                 'metadata'=>['message'=>'Data Berhasil diupdate','code'=>$this->successStatus],
@@ -511,8 +539,11 @@ trait ControllerResources
             return view($this->controllerName.'.crud.create',array_merge(get_object_vars($this),compact('datas','formfields')));
         
         }else{
-           
-            return view('~layouts.component.'.env('COMPONENT_UI').'.crud.create',array_merge(get_object_vars($this),compact('datas','formfields')));
+            if(config('app.ui')){
+                return view('components.'.config('app.ui').'.layout.create',array_merge(get_object_vars($this),compact('datas','formfields')));
+            }else{
+                return view('~layouts.component.'.env('COMPONENT_UI').'.crud.create',array_merge(get_object_vars($this),compact('datas','formfields')));
+            }
         }
         // return view('admin.edit',array_merge(get_object_vars($this),compact('datas','formfields')));
     }

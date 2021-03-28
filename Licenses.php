@@ -111,6 +111,10 @@ class FIELD
         return new CField('checkbox', ['list' => $choices]);
     }
 
+    public static function Switchbox(array $choices = [])
+    {
+        return new CField('switchbox', ['list' => $choices]);
+    }
     public static function File()
     {
         return new CField('file');

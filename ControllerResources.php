@@ -53,6 +53,10 @@ trait ControllerResources
         if(!empty($this->namaModel::$relasi)) $this->objModel->with($this->namaModel::$relasi);
         $this->currentUser=Auth::user();
 
+        
+        if(empty($this->addRecordURL)){
+            $this->addRecordURL=url("api/".$this->controllerName);
+        }
         if(empty($this->updateAction)){
             $this->updateAction=url("api/".$this->controllerName);
         }
@@ -199,17 +203,25 @@ trait ControllerResources
     {
         //
         $datas=$this->namaModel::find($id);
-        $formfields=$datas->getFormFields();
-        
-         if (View::exists($this->controllerName.'.crud.create')) {
-            
-            return view($this->controllerName.'.crud.edit',
-            array_merge(get_object_vars($this),compact('datas','formfields')));
-        
+        $formFields=$datas->getFormFields();
+        if(config('app.ui')){
+            if (View::exists($this->controllerName.'.crud.update')) {
+                return view($this->controllerName.'.crud.update',array_merge(get_object_vars($this),compact('datas','formFields')));
+            }else{
+                
+                return view('components.'.$this->theme.'.layout.update',array_merge(get_object_vars($this),compact('datas','formFields')));
+            }
         }else{
+            if (View::exists($this->controllerName.'.crud.update')) {
+            
+                return view($this->controllerName.'.crud.update',
+                array_merge(get_object_vars($this),compact('datas','formfields')));
+            
+            }else{
            
-            return view('~layouts.component.'.env('COMPONENT_UI').'.crud.edit',
-            array_merge(get_object_vars($this),compact('datas','formfields')));
+                return view('~layouts.component.'.env('COMPONENT_UI').'.crud.update',
+                array_merge(get_object_vars($this),compact('datas','formfields')));
+            }
         }
     }
 

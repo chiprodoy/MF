@@ -157,14 +157,17 @@ trait ControllerResources
             //$m = new \App\Models\User;
             foreach($m->getFillable() as $k => $v){
                 if(Str::contains($v, '_file')){
-                    $m->$v=$uploaded;
+                    if(empty($uploaded[$v])){
+                        $m->$v=$m->$v;
+                    }else{
+                        $m->$v=$uploaded[$v];
+                    }
                 }else{
                     $m->$v = $request->$v;
                 }
             }
             $m->user_modify= ($this->mustCheckingRole ? Auth::user()->name : 'ANONYMOUS');
             $m->user_id=($this->mustCheckingRole ? Auth::id() : 1 );
-
             $m->save();
            // dd(DB::getQueryLog());
             $respon=['response'=>[

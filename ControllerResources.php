@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 interface FormController
 {
@@ -607,6 +608,11 @@ trait ControllerResources
     protected function getClassName(): string
     {
         return (new \ReflectionClass($this))->getShortName();
+    }
+    public function export() 
+    {
+        if(isset($this->exportModel))
+        return Excel::download(new $this->exportModel, $this->exportFileName.'.xlsx');
     }
 }
 /*

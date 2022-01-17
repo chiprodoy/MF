@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
+use Illuminate\View\Component;
 use Maatwebsite\Excel\Facades\Excel;
 
 interface FormController
@@ -38,14 +39,25 @@ trait ControllerResources
     public $totalRec;
     public $page=1;
     public $offset=0;
+    
     public $updateAction;
     public $destroyAction;
+    public $addAction;
+    public $editAction;
     public $saveAction;
     public $readAction;
+    public $detailAction; //['url','text']
+
+
     public $currentUser;
     public $theme;
     public $mustCheckingRole=false;
     public $linkedController;
+    public $keyword;
+    public $canEdit;
+    public $canDelete;
+    public $canCreate;
+
 
     public function __construct()
     {
@@ -53,8 +65,7 @@ trait ControllerResources
         $this->objModel=$this->namaModel::select('*');
         if(!empty($this->namaModel::$relasi)) $this->objModel->with($this->namaModel::$relasi);
         $this->currentUser=Auth::user();
-
-        
+        /*
         if(empty($this->addRecordURL)){
             $this->addRecordURL=url("api/".$this->controllerName);
         }
@@ -70,8 +81,12 @@ trait ControllerResources
         if(empty($this->readAction)){
             $this->readAction=url("api/".$this->controllerName);
         }
+        */
+        $this->readAction=$this->controllerName;
+
         $this->mustCheckingRole = (isset($this->needCheckingRole) ? true : false);
        // $this->controllerName = Route::currentRouteName();
+
     }
 
     public function setObjModel($cls){
@@ -84,6 +99,18 @@ trait ControllerResources
      */
     public function index(Request $request)
     {
+       if(Gate::check('update-own', [$this->namaModel]) || Gate::check('update', [$this->namaModel])){
+            $this->canEdit=true;
+       }
+       
+       if(Gate::check('delete-own', [$this->namaModel]) || Gate::check('delete', [$this->namaModel])){
+        $this->canDelete=true;
+       }
+
+       if(Gate::check('create-own', [$this->namaModel]) || Gate::check('create', [$this->namaModel])){
+        $this->canCreate=true;
+       }
+
         if(config('app.ui')){
             $sortMethod=($request->order=='asc' ? false: true);
             $this->page=(empty($request->page) ? $this->page:$request->page);
@@ -205,9 +232,10 @@ trait ControllerResources
      */
     public function edit($id)
     {
-        //
+        $this->updateAction=route($this->controllerName.'.update',$id);
         $datas=$this->namaModel::find($id);
         $formFields=$datas->getFormFields();
+        
         if(config('app.ui')){
             if (View::exists($this->controllerName.'.crud.update')) {
                 return view($this->controllerName.'.crud.update',array_merge(get_object_vars($this),compact('datas','formFields')));
@@ -219,12 +247,12 @@ trait ControllerResources
             if (View::exists($this->controllerName.'.crud.update')) {
             
                 return view($this->controllerName.'.crud.update',
-                array_merge(get_object_vars($this),compact('datas','formfields')));
+                array_merge(get_object_vars($this),compact('datas','formFields')));
             
             }else{
            
                 return view('~layouts.component.'.env('COMPONENT_UI').'.crud.update',
-                array_merge(get_object_vars($this),compact('datas','formfields')));
+                array_merge(get_object_vars($this),compact('datas','formFields')));
             }
         }
     }
@@ -239,7 +267,6 @@ trait ControllerResources
     public function update($id,Request $request)
     {
         $defaultRoute = $this->controllerName.'.index';
-        
         if(method_exists($this,'validasiInput')) {
             $validator=$this->validasiInput($request);
           //  $validator->validate();
@@ -478,6 +505,7 @@ trait ControllerResources
         $className = $this->getClassName();
         $this->col=$this->namaModel::viewable();
         $keyword=$request->keyword;
+        $this->keyword=$keyword;
         $page=$this->page;
         $totalPage=$this->totalRec/$this->limitRow;
         $prev=$page-1;
@@ -557,6 +585,7 @@ trait ControllerResources
         }else{
             if(config('app.ui')){
                 return view('components.'.config('app.ui').'.layout.create',array_merge(get_object_vars($this),compact('datas','formfields')));
+    
             }else{
                 return view('~layouts.component.'.env('COMPONENT_UI').'.crud.create',array_merge(get_object_vars($this),compact('datas','formfields')));
             }
@@ -600,6 +629,13 @@ trait ControllerResources
         }
     }
 
+    private function convertURL($action){
+        if(strpos($action,'http') === 0 || strpos($action,'https') ===0 ){
+                return $action;
+        }else{
+            return route($action);
+        }
+    }
 
         /**
      * @return string
@@ -614,6 +650,7 @@ trait ControllerResources
         if(isset($this->exportModel))
         return Excel::download(new $this->exportModel, $this->exportFileName.'.xlsx');
     }
+
 }
 /*
 todo : fix upload file

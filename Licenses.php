@@ -164,3 +164,18 @@ trait DeleteApproval{
 
     }
 }
+
+class TYPE{
+    public const STR='string';
+    public const TEXT='text';
+    public const DATE='date';
+    public const DATETIME='datetime';
+    public const NUMBER='number';
+    public const FILE='file';
+
+
+    public static function SELECT(){
+        return ['select'];
+    }
+    
+}

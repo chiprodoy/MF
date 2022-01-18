@@ -199,7 +199,9 @@ trait ControllerResources
             $m->save();
            // dd(DB::getQueryLog());
             $respon=['response'=>[
-                'metadata'=>['message'=>'Data Berhasil disimpan','code'=>$this->successStatus],
+                'metadata'=>['message'=>'Data Berhasil disimpan',
+                'code'=>$this->successStatus],
+                'rows'=>$m
             ]];
 
         }catch (\Exception $exception) {
@@ -209,7 +211,9 @@ trait ControllerResources
             $defaultRoute=$this->controllerName.'.create';
             
             $respon= ['response'=>[
-                'metadata'=>['message'=>'Data gagal disimpan'.substr($exception,0,1000).'...','code'=>$this->errorStatus],
+                'metadata'=>[
+                    'message'=>'Data gagal disimpan'.substr($exception,0,1000).'...',
+                    'code'=>$this->errorStatus]
             ]];
         }
 

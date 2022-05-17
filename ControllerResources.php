@@ -669,3 +669,54 @@ trait RoleAbility{
 
     private $needCheckingRole=true;
 }
+
+trait ApiResponse
+{
+	/**
+     * Return a success JSON response.
+     *
+     * @param  array|string  $data
+     * @param  string  $message
+     * @param  int|null  $code
+     * @return \Illuminate\Http\JsonResponse
+     */
+	protected function success($data, string $message = null, int $code = 200)
+	{
+		return response()->json([
+			'status' => 'success',
+            'response_code' =>$code,
+			'message' => $message,
+			'data' => $data
+		], $code);
+	}
+
+	/**
+     * Return an error JSON response.
+     *
+     * @param  string  $message
+     * @param  int  $code
+     * @param  array|string|null  $data
+     * @return \Illuminate\Http\JsonResponse
+     */
+	protected function error($message = null, int $code, $data = null)
+	{
+		return response()->json([
+			'status' => 'Error',
+            'response_code'=>$code,
+			'message' => $message,
+			'data' => $data
+		], $code);
+	}
+
+}
+class ResponseCode{
+    // HTTP STATUS CODE
+    const SUCCESS = 200;
+    const ERROR = 500;
+    const NOTFOUND = 404;//204; //partial content for 206
+    const NOCONTENT = 204;//204; //partial content for 206
+    const BADREQUEST =400;
+    const VALIDATIONERROR =422;
+    const UNAUTHORIZED=401;
+    const FORBIDDEN=403;
+}

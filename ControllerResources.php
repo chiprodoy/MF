@@ -239,8 +239,7 @@ trait ControllerResources
         $this->updateAction=route($this->controllerName.'.update',$id);
         $datas=$this->namaModel::find($id);
         $formFields=$datas->getFormFields();
-        
-        if(config('app.ui')){
+        if(config('app.ui')){ 
             if (View::exists($this->controllerName.'.crud.update')) {
                 return view($this->controllerName.'.crud.update',array_merge(get_object_vars($this),compact('datas','formFields')));
             }else{
@@ -528,6 +527,7 @@ trait ControllerResources
                 return view($this->controllerName.'.crud.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
                 'totalPage','prev','next','filterFields','formfields','viewAble')));
             }else{
+                
                 return view('components.'.config('app.ui').'.layout.index',array_merge(get_object_vars($this),compact('datas','keyword','page',
                 'totalPage','prev','next','filterFields','formfields','viewAble')));
             }
@@ -672,6 +672,22 @@ trait RoleAbility{
 
 trait ApiResponse
 {
+    public $responCode;
+    public $responMessage;
+    public $respons=[];
+
+    protected function setErrorRespon($responMessage,$responCode=500){
+        array_push($this->respons,['error'=>true,'message'=>$responMessage,'response_code'=>$responCode]);
+    }
+
+    protected function setRespon($data,$responMessage,$responCode=200){
+        array_push($this->respons,['data'=>$data,'message'=>$responMessage,'response_code'=>$responCode]);
+    }
+
+    protected function hasErrorRespon(){
+        return (!empty($this->respons) && array_key_exists('error',$this->respons[0])) ? true : false; 
+    }
+
 	/**
      * Return a success JSON response.
      *
@@ -680,14 +696,19 @@ trait ApiResponse
      * @param  int|null  $code
      * @return \Illuminate\Http\JsonResponse
      */
-	protected function success($data, string $message = null, int $code = 200)
+	protected function success($data=null, string $message = null, int $code = 200)
 	{
-		return response()->json([
-			'status' => 'success',
-            'response_code' =>$code,
-			'message' => $message,
-			'data' => $data
-		], $code);
+        if(empty($data)){
+            return response()->json($this->respons, $this->respons['response_code']);
+        }else{
+            return response()->json([
+                'status' => 'success',
+                'response_code' =>$code,
+                'message' => $message,
+                'data' => $data
+            ], $code);
+        }
+
 	}
 
 	/**
@@ -698,14 +719,19 @@ trait ApiResponse
      * @param  array|string|null  $data
      * @return \Illuminate\Http\JsonResponse
      */
-	protected function error($message = null, int $code, $data = null)
+	protected function error($message = null, int $code=500, $data = null)
 	{
-		return response()->json([
-			'status' => 'Error',
-            'response_code'=>$code,
-			'message' => $message,
-			'data' => $data
-		], $code);
+        if(empty($message)){
+            return response()->json($this->respons, $code);
+        }else{
+            return response()->json([
+                'status' => 'Error',
+                'response_code'=>$code,
+                'message' => $message,
+                'data' => $data
+            ], $code);
+        }
+
 	}
 
 }

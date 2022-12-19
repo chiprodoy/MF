@@ -698,7 +698,7 @@ trait ApiResponse
      * @param  array|string|null  $data
      * @return \Illuminate\Http\JsonResponse
      */
-	protected function error($message = null, int $code, $data = null)
+	protected function error(int $code, $message = null,  $data = null)
 	{
 		return response()->json([
 			'status' => 'Error',
@@ -708,6 +708,86 @@ trait ApiResponse
 		], $code);
 	}
 
+
+    /**
+     * Return a success JSON response.
+     *
+     * @param  array|string  $data
+     * @param  string  $message
+     * @param  int|null  $code
+     * @return \Illuminate\Http\JsonResponse
+     */
+	protected function iSuccess($data, Request $request,$redirectURL,string $message = null, int $code = 200)
+	{
+        $this->format['status']='success';
+        $this->format['response_code']=$code;
+        $this->format['message']=$message;
+        $this->format['data']=$data;
+
+        if($request->wantsJson()){
+            return response()->json($this->format, $code);
+        }else{
+            return redirect($redirectURL)->with('response.message',$message);
+        }
+
+	}
+
+	/**
+     * Return an error JSON response.
+     *
+     * @param  string  $message
+     * @param  int  $code
+     * @param  array|string|null  $data
+     * @return \Illuminate\Http\JsonResponse
+     */
+	protected function iError(Request $request,$redirectURL,int $code,$message = null, $data = null)
+	{
+        $this->format['status']='success';
+        $this->format['response_code']=$code;
+        $this->format['message']=$message;
+        $this->format['data']=$data;
+        if($request->wantsJson()){
+            return response()->json($this->format, $code);
+        }else{
+            return redirect($redirectURL)->with('response.message',$message);
+        }
+	}
+
+}
+trait PageMenu{
+    public $menu;
+    public $menuModel;
+
+    protected function getBackEndMenu(){
+        $this->menu=$this->menuModel::with('submenu')->where('isPublic',false)->where('menu_id',null)->get();
+
+    }
+    protected function getFrontEndMenu(){
+
+    }
+}
+trait DataTable{
+    public $TABLE_COL_HEADER;
+    public $TABLE_RECORDS;
+    public $RECORD_PER_PAGE=10;
+}
+trait BreadCrumb{
+    public $BREADCRUMB_ITEM=[];
+    public $CURRENT_PAGE;
+
+    protected function setBreadCrumb(){
+        array_push($this->BREADCRUMB_ITEM,$this->CURRENT_PAGE);
+
+    }
+}
+class Page{
+    public $title;
+    public $url;
+
+    public function __construct($title,$url){
+        $this->title=$title;
+        $this->url=$url;
+    }
 }
 class ResponseCode{
     // HTTP STATUS CODE

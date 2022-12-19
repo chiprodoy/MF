@@ -812,9 +812,9 @@ class Page{
         $this->title=$title;
         $this->url=$url;
     }
-	}
-
 }
+
+
 class ResponseCode{
     // HTTP STATUS CODE
     const SUCCESS = 200;

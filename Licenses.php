@@ -129,7 +129,10 @@ class FIELD
     {
         return new CField('time');
     }
-
+    public static function Year()
+    {
+        return new CField('year');
+    }
     public static function DateTime()
     {
         return new CField('datetime');

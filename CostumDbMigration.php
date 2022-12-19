@@ -30,7 +30,7 @@ trait CostumDbMigration
                 $table->softDeletes();
                 $table->timestamps();
                 $table->string('user_modify');
-                $table->integer('user_id');
+                $table->integer('user_id')->nullable();
         });
 
     }

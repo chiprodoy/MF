@@ -660,8 +660,11 @@ trait ControllerResources
 todo : fix upload file
 */
 trait UploadFile{
-    public function uploadMyFile(){
-        $path = Storage::disk('public')->put('photos', new File('/path/to/photo'));
+    public $uploadDisk='public';
+    public $uploadPath='images';
+
+    public function uploadMyFile($fileResource){
+        return Storage::disk($this->uploadDisk)->put($this->uploadPath,$fileResource);
     }
 }
 
